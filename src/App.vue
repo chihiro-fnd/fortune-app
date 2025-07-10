@@ -20,9 +20,19 @@
         <label for="birthday">生年月日</label>
         <input type="date" id="birthday" name="birthday" v-model="birthday" :max="today" />
       </div>
+      <p>星座： {{ zodiacSign }}</p>
       <div class="p-results">
         <h2>今日の運勢</h2>
       </div>
+      <!-- <button @click="fetchHoroscope">占い結果を取得</button>
+      <pre>{{ horoscopeResult }}</pre> -->
+
+      <pre>{{ horoscope }}</pre>
+      <button @click="fetchHoroscope">データを取得</button>
+      <!-- 使用するWEB APIのリンク -->
+      <ul class="p-link">
+        <li>powerd by <a href="http://jugemkey.jp/api/waf/api_free.php">JugemKey</a></li>
+      </ul>
     </div>
   </div>
 </template>
@@ -79,6 +89,23 @@ const zodiacSign = computed(() => {
   if ((m === 2 && d >= 19) || (m === 3 && d <= 20)) return '魚座'
   return ''
 })
+
+// 占いAPIを取得する
+const horoscope = ref(null)
+
+const fetchHoroscope = async () => {
+  const url = '/api/api/horoscope/free/2025/07/01'
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('データの取得に失敗しました')
+
+    const data = await res.json()
+    console.log(data) // ← 一旦中身を確認
+    horoscope.value = data
+  } catch (error) {
+    console.error('エラー:', error)
+  }
+}
 </script>
 
 <style scoped>
