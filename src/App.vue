@@ -29,6 +29,8 @@
 
       <pre>{{ horoscope }}</pre>
       <button @click="fetchHoroscope">データを取得</button>
+      <div v-if="isLoading">読み込み中</div>
+      <div v-else-if="errorMessages">エラー：{{ errorMessages }}</div>
       <!-- 使用するWEB APIのリンク -->
       <ul class="p-link">
         <li>powerd by <a href="http://jugemkey.jp/api/waf/api_free.php">JugemKey</a></li>
@@ -92,18 +94,27 @@ const zodiacSign = computed(() => {
 
 // 占いAPIを取得する
 const horoscope = ref(null)
-
+const isLoading = ref(false)
+const errorMessages = ref('')
 const fetchHoroscope = async () => {
+  // 【あとで】2025/07/01 を今日の日付にできるようにする
   const url = '/api/api/horoscope/free/2025/07/01'
   try {
-    const res = await fetch(url)
-    if (!res.ok) throw new Error('データの取得に失敗しました')
-
-    const data = await res.json()
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error('データの取得に失敗しました')
+    }
+    const data = await response.json()
     console.log(data) // ← 一旦中身を確認
+    // {{horoscope}} にデータを格納
     horoscope.value = data
   } catch (error) {
     console.error('エラー:', error)
+    // errorの型エラーを解消
+    errorMessages.value = (error as Error).message
+  } finally {
+    // ローディング状態の管理
+    isLoading.value = false
   }
 }
 </script>
