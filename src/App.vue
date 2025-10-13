@@ -24,11 +24,16 @@
       <div class="p-results">
         <h2>今日の運勢</h2>
       </div>
-      <!-- <button @click="fetchHoroscope">占い結果を取得</button>
-      <pre>{{ horoscopeResult }}</pre> -->
 
-      <pre>{{ horoscope }}</pre>
-      <button @click="fetchHoroscope">データを取得</button>
+      <!-- <pre>{{ horoscope }}</pre> -->
+      <div v-if="userHoroscope">
+        <h2>{{ userHoroscope.sign }} の今日の運勢</h2>
+        <p>順位: {{ userHoroscope.rank }}</p>
+        <p>{{ userHoroscope.content }}</p>
+        <p>ラッキーアイテム: {{ userHoroscope.item }}</p>
+        <p>ラッキーカラー: {{ userHoroscope.color }}</p>
+      </div>
+      <button @click="fetchHoroscope">占い結果を取得</button>
       <div v-if="isLoading">読み込み中</div>
       <div v-else-if="errorMessages">エラー：{{ errorMessages }}</div>
       <!-- 使用するWEB APIのリンク -->
@@ -63,8 +68,6 @@ function drawCard() {
 
 // 誕生日のデータを文字列としてリアクティブに保持する
 const birthday = ref('')
-// 今日の日付 'YYYY-MM-DD' 形式 にする
-const today = new Date().toISOString().split('T')[0]
 // リアクティブなbirthdayに基づいて Date オブジェクトを作る（computedを使う）
 const birthDate = computed(() => new Date(birthday.value))
 
@@ -96,18 +99,34 @@ const zodiacSign = computed(() => {
 const horoscope = ref(null)
 const isLoading = ref(false)
 const errorMessages = ref('')
+// ユーザーの星座の運勢
+const userHoroscope = ref(null)
+
 const fetchHoroscope = async () => {
-  // 【あとで】2025/07/01 を今日の日付にできるようにする
-  const url = '/api/api/horoscope/free/2025/07/01'
+  // 今日の日付 'YYYY-MM-DD' 形式 にする
+  const today = new Date().toISOString().split('T')[0]
+  // console.log(today) // 2025-08-01
+  const todaySlash = today.replace(/-/g, '/')
+  // console.log(todaySlash) // 2025/08/01
+  // 今日の運勢を取得
+  const url = `/api/api/horoscope/free/${todaySlash}`
   try {
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error('データの取得に失敗しました')
     }
     const data = await response.json()
-    console.log(data) // ← 一旦中身を確認
+    // console.log(data) // ← 一旦中身を確認
     // {{horoscope}} にデータを格納
     horoscope.value = data
+
+    // 今日の配列
+    const resultArray = data.horoscope?.[todaySlash]
+
+    // zodiacSign（ユーザーの星座） と一致するデータを検索
+    userHoroscope.value = resultArray.find(
+      (item: { sign: string }) => item.sign === zodiacSign.value,
+    )
   } catch (error) {
     console.error('エラー:', error)
     // errorの型エラーを解消
